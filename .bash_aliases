@@ -1,0 +1,177 @@
+# terminal
+
+function get-term-height () {
+  stty -a | awk 'match($0, "\\<rows +([0-9]+)", m) {print m[1]}'
+}
+
+
+
+# ls
+
+## enable color support of ls and also add handy aliases
+if [ -x /usr/bin/dircolors ]; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    export autocolour=' --color=auto'
+fi
+
+alias ll="'ls'$autocolour -alF"
+alias la="'ls'$autocolour -A"
+alias  l="'ls'$autocolour -CF"
+alias ld="ll -d"
+alias lt="ll -tr"
+
+
+
+# grep
+
+alias  grep="grep $autocolour"
+alias fgrep="fgrep$autocolour"
+alias egrep="egrep$autocolour"
+
+
+
+# watching
+
+function watch () {
+  sleep="$1"
+  shift
+
+  (
+    trap 'tput rmcup; tput cnorm' EXIT # restore terminal on exit
+    tput smcup # alternatve buffer
+    tput civis # hide cursor
+    clear="$(tput clear)"
+    cursor_home="$(tput cup 0 0)"
+    clear_eol="$(tput el)" # clear cursor to end of line
+    clear_eos="$(tput ed)" # clear cursor to end of screen
+    while true; do
+      buf="$(eval "$@" 2>&1)"
+      echo -n "$cursor_home${buf//$'\n'/$clear_eol$'\n'}$clear_eos"
+      sleep "$sleep"
+    done
+  )
+}
+
+## "alert" alias for long running commands.  Use like so:
+##   sleep 10; alert
+alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+
+
+
+# terraform
+
+alias tffmt='terraform fmt -recursive $(git rev-parse --show-toplevel)'
+alias tfdoc='find $(git rev-parse --show-toplevel) -type d -exec test -e {}/README.md \; -exec terraform-docs {} \;' # Only update existing README files
+
+
+
+# git
+
+.gbr-stack-file () {
+  stack=$(git rev-parse --show-toplevel)/.git/branch-stack
+  touch -a $stack
+  echo $stack
+}
+
+gbr-current () {
+    git rev-parse --abbrev-ref HEAD
+}
+
+gbr-stack () {
+  stack=$(.gbr-stack-file)
+  grep --color=always -n '^' $stack
+  printf '\033[0;32m->\033[0m'; gbr-current
+}
+
+gbr-pop () {
+  stack=$(.gbr-stack-file)
+  old_branch=$(gbr-current)
+  if ( [ -s "$stack" ] )
+  then
+    git checkout "$(tail -1 "$stack")"
+    new_branch=$(gbr-current)
+    if ( [ "$new_branch" != "$old_branch" ] )
+    then
+      sed -i '$ d' "$stack"
+    fi
+  fi
+  gbr-stack
+}
+
+gbr-push () {
+  stack=$(.gbr-stack-file)
+  old_branch=$(gbr-current)
+  git checkout "$1"
+  new_branch=$(gbr-current)
+  if ( [ "$new_branch" != "$old_branch" ] )
+  then
+    printf '%s\n' "$old_branch" >>"$stack"
+  fi
+  gbr-stack
+}
+
+gbr-create () {
+  git branch -c "$@" &&
+    gbr-push "${@: -1}"
+}
+
+alias gbra="git branch"                       ; alias gbr=gbra
+alias gcom="tffmt && git commit"              ; alias gcm=gcom
+alias gche="git checkout"                     ; alias gch=gche ; alias gco=gche
+alias gdif="git diff"                         ; alias gdf=gdif
+alias glog="git log"                          ; alias glg=glog
+alias gmto="git mergetool"                    ; alias gmt=gmto
+alias gpul="git pull"                         ; alias gpl=gpul
+alias gpus="git push"                         ; alias gps=gpus
+alias greb="git rebase -i --autosquash main"  ; alias grb=greb
+alias gres="git reset --hard HEAD"            ; alias grs=gres
+alias gsho="git show"                         ; alias gsh=gsho
+alias gsta="git status"                       ; alias gst=gsta ; alias gss=gsta
+alias gbr.c="gbr-create"
+alias gbr.l="gbr -l"
+alias gbr.po="gbr-pop"
+alias gbr.pu="gbr-push"
+alias gdf.c="gdf --cached"
+alias gdf.no="gdf --name-only"
+alias glg.1="glg --oneline"
+alias glg.no="glg --name-only"
+alias glg.me='glg --author="$(git config user.name)"' # "mine"
+alias gpl.m='( GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD); git checkout main && git pull; git checkout $GIT_BRANCH; )'
+alias gsh.no="gsh --name-only"
+
+## map x-y to x.y
+for a in $(alias -p | perl -nle '/^alias (g\w+\.\w+)=/ and print $1')
+do
+  alias $(tr . - <<<$a)=$a
+done
+
+
+git-continuous-status () {
+  watch 0.9 printf '\\033\[36\;1m%s\\033\[0m\\n\\n "$(date)"'\; gbr-stack\; echo\; gss
+}
+
+git-continuous-fetch-and-diff () {
+  clear
+  echo Waiting for diff...
+  watch 9 git fetch \>/dev/null\; gdf --color origin/main.. \| grep -Ev '[+-]\{3\}\ [ab]\\/' \| head -$1
+}
+
+# git-tmux
+
+git-tmux-status-pane ()
+{
+  current_directory=$(pwd)
+  original_pane=$TMUX_PANE
+  tmux split-pane -h \; resize-pane -x72
+  tmux send-keys "cd '$current_directory'; "
+  tmux send-keys "git-continuous-status; "
+  tmux send-keys Enter
+  lower_pane_height=48
+  tmux split-pane -v \; resize-pane -y$lower_pane_height
+  tmux send-keys "cd '$current_directory'; "
+  tmux send-keys "setterm -linewrap off; "
+  tmux send-keys "git-continuous-fetch-and-diff $lower_pane_height; "
+  tmux send-keys Enter
+  tmux select-pane -t$original_pane
+}
+
