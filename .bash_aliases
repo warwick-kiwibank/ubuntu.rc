@@ -117,6 +117,14 @@ alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo
 
 
 
+# tmux
+
+tmux-pane-id () {
+  tmux display-message -p '#{pane_id}'
+}
+
+
+
 # terraform
 
 alias tffmt='terraform fmt -recursive $(git rev-parse --show-toplevel)'
@@ -196,6 +204,7 @@ alias glg.1="glg --oneline"
 alias glg.no="glg --name-only"
 alias glg.me='glg --author="$(git config user.name)"' # "mine"
 alias gpl.m='( GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD); git checkout main && git pull; git checkout $GIT_BRANCH; )'
+alias grb.o="gpl.m && grb"
 alias gsh.no="gsh --name-only"
 
 ## map x-y to x.y
@@ -206,7 +215,7 @@ done
 
 
 git-continuous-status () {
-  watch 0.9 printf '\\033\[36\;1m%s\\033\[0m\\n\\n "$(date)"'\; gbr-stack\; echo\; gss
+  watch 3 gbr-stack\; echo\; gss
 }
 
 git-continuous-fetch-and-diff () {
@@ -219,18 +228,31 @@ git-continuous-fetch-and-diff () {
 
 git-tmux-status-pane ()
 {
+  right_pane_width=72
+  lower_pane_height=48
+
   current_directory=$(pwd)
-  original_pane=$TMUX_PANE
-  tmux split-pane -h \; resize-pane -x72
+  TMUX_original_pane=$(tmux-pane-id)
+  tmux split-pane -h \; resize-pane -x$right_pane_width
+  tmux select-pane -T clock
+  TMUX_clock_pane=$(tmux-pane-id)
+  tmux split-pane -v
+  tmux select-pane -T git_status
+  TMUX_git_status=$(tmux-pane-id)
+  tmux select-pane -t$TMUX_clock_pane
+  tmux resize-pane -y1
+  tmux send-keys "clock $right_pane_width; "
+  tmux send-keys Enter
+  tmux select-pane -t$TMUX_git_status
   tmux send-keys "cd '$current_directory'; "
   tmux send-keys "git-continuous-status; "
   tmux send-keys Enter
-  lower_pane_height=48
   tmux split-pane -v \; resize-pane -y$lower_pane_height
+  tmux select-pane -T git_diff
   tmux send-keys "cd '$current_directory'; "
   tmux send-keys "setterm -linewrap off; "
   tmux send-keys "git-continuous-fetch-and-diff $lower_pane_height; "
   tmux send-keys Enter
-  tmux select-pane -t$original_pane
+  tmux select-pane -t$TMUX_original_pane
 }
 
