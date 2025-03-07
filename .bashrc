@@ -155,9 +155,14 @@ PERL_MM_OPT="INSTALL_BASE=/home/vagrant/perl5"; export PERL_MM_OPT;
 
 # repo symlinks
 (
-  for src in $('ls' -d kb-tf-* 2>/dev/null)
+  for src in $(
+      for x in tf aws azure
+      do
+        find * -maxdepth 0 -type d -exec [ -d "{}/.git" ] \; -name "kb-$x-*" -print
+      done
+    )
   do
-    dst=$(cut -d- -f3 <<<$src)
+    dst=$(cut -d- -f3- <<<$src)
     [ -e $dst ] || ln -sv $src $dst
   done
 )
