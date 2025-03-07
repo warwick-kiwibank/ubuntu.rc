@@ -6,9 +6,61 @@ function get-term-height () {
 
 
 
+# Colours
+## https://stackoverflow.com/a/28938235
+
+## Reset
+export CLR_Normal='\033[0m'          # Text Reset
+
+## Regular Colors
+export CLR_Black='\033[0;30m'        # Black
+export CLR_Red='\033[0;31m'          # Red
+export CLR_Green='\033[0;32m'        # Green
+export CLR_Yellow='\033[0;33m'       # Yellow
+export CLR_Blue='\033[0;34m'         # Blue
+export CLR_Purple='\033[0;35m'       # Purple
+export CLR_Cyan='\033[0;36m'         # Cyan
+export CLR_White='\033[0;37m'        # White
+
+## Bold
+export CLR_BBlack='\033[1;30m'       # Black
+export CLR_BRed='\033[1;31m'         # Red
+export CLR_BGreen='\033[1;32m'       # Green
+export CLR_BYellow='\033[1;33m'      # Yellow
+export CLR_BBlue='\033[1;34m'        # Blue
+export CLR_BPurple='\033[1;35m'      # Purple
+export CLR_BCyan='\033[1;36m'        # Cyan
+export CLR_BWhite='\033[1;37m'       # White
+
+## Underline
+export CLR_UBlack='\033[4;30m'       # Black
+export CLR_URed='\033[4;31m'         # Red
+export CLR_UGreen='\033[4;32m'       # Green
+export CLR_UYellow='\033[4;33m'      # Yellow
+export CLR_UBlue='\033[4;34m'        # Blue
+export CLR_UPurple='\033[4;35m'      # Purple
+export CLR_UCyan='\033[4;36m'        # Cyan
+export CLR_UWhite='\033[4;37m'       # White
+
+## Background
+export CLR_On_Black='\033[40m'       # Black
+export CLR_On_Red='\033[41m'         # Red
+export CLR_On_Green='\033[42m'       # Green
+export CLR_On_Yellow='\033[43m'      # Yellow
+export CLR_On_Blue='\033[44m'        # Blue
+export CLR_On_Purple='\033[45m'      # Purple
+export CLR_On_Cyan='\033[46m'        # Cyan
+export CLR_On_White='\033[47m'       # White
+
+## High Intensity
+export CLR_IBlack='\033[0;90m'       # Black
+export CLR_IRed='\033[0;91m'         # Red
+
+
+
 # ls
 
-## enable color support of ls and also add handy aliases
+## enable colour support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
     export autocolour=' --color=auto'
