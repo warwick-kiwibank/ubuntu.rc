@@ -219,9 +219,14 @@ git-continuous-status () {
 }
 
 git-continuous-fetch-and-diff () {
-  clear
-  echo Waiting for diff...
-  watch 9 git fetch \>/dev/null\; gdf --color origin/main.. \| grep -Ev '[+-]\{3\}\ [ab]\\/' \| head -$1
+  nlines=${1:--0}
+  diff_range=${2:-origin/main..}
+  watch 9                                                         \
+    printf "'diff $CLR_BPurple%s$CLR_Normal\\n'" "'$diff_range'"\;\
+    git fetch \>/dev/null\;                                       \
+    gdf --color "'$diff_range'"   \|                              \
+    grep -Ev '[+-]\{3\}\ [ab]\\/' \|                              \
+    head -n$nlines
 }
 
 # git-tmux
