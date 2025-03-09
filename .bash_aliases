@@ -237,33 +237,48 @@ git-tmux-status-pane ()
 {
   right_pane_width=${1:-72} # Optional, defaults to 72
   lower_pane_height=$2      # Optional, defaults to half of available height
+  total_pane_height=$(tmux display-message -p '#{pane_height}')
+  clock_pane_height=1
+  : ${lower_pane_height:=$(( ($total_pane_height - $clock_pane_height) / 2 ))}
+  middle_pane_height=$(( $total_pane_height - $lower_pane_height ))
 
   current_directory=$(pwd)
-  TMUX_original_pane=$(tmux-pane-id)
-  tmux split-pane -h \; resize-pane -x$right_pane_width
-  tmux select-pane -T clock
-  TMUX_clock_pane=$(tmux-pane-id)
-  tmux split-pane -v
-  tmux select-pane -T git_status
-  TMUX_git_status=$(tmux-pane-id)
-  tmux select-pane -t$TMUX_clock_pane
-  tmux resize-pane -y1
-  tmux send-keys "clock $right_pane_width; "
-  tmux send-keys Enter
-  tmux select-pane -t$TMUX_git_status
-  tmux send-keys "cd '$current_directory'; "
-  tmux send-keys "git-continuous-status; "
-  tmux send-keys Enter
-  tmux split-pane -v
-  pane_height=$(tmux display-message -p '#{pane_height}')
-  : ${lower_pane_height:=$pane_height}
-  tmux resize-pane -y$lower_pane_height
-  tmux select-pane -T git_diff
-  tmux send-keys "cd '$current_directory'; "
-  tmux send-keys "setterm -linewrap off; "
-  pane_height=$(tmux display-message -p '#{pane_height}')
-  tmux send-keys "git-continuous-fetch-and-diff; "
-  tmux send-keys Enter
-  tmux select-pane -t$TMUX_original_pane
+  original_pane_id=$(tmux-pane-id)                       # get pane id
+
+  # Create the panes
+  ## Clock pane
+  tmux split-pane -h \; resize-pane -x$right_pane_width  # create pane
+  clock_pane_id=$(tmux-pane-id)                          # get pane id
+  tmux select-pane -T clock                              # name pane
+  ## Git status pane
+  tmux split-pane -v                                     # create pane
+  git_status_id=$(tmux-pane-id)                          # get pane id
+  tmux select-pane -T git_status                         # name pane
+  ## Git diff-from-origin pane
+  tmux split-pane -v                                     # create pane
+  git_ogdiff_id=$(tmux-pane-id)                          # get pane id
+  tmux select-pane -T git_ogdiff                         # name pane
+
+  # Set pane heights
+  tmux resize-pane -t$clock_pane_id -y$clock_pane_height
+  tmux resize-pane -t$git_status_id -y$middle_pane_height
+  tmux resize-pane -t$git_ogdiff_id -y$lower_pane_height
+
+  # Send commands to the panes
+  tmux select-pane -t$clock_pane_id \; send-keys                              \
+    "clock $right_pane_width                                              ; " \
+    Enter
+  tmux select-pane -t$git_status_id \; send-keys                              \
+    "cd '$current_directory'                                              ; " \
+    "setterm -linewrap off                                                ; " \
+    "git-continuous-status-and-diff                                       ; " \
+    Enter
+  tmux select-pane -t$git_ogdiff_id \; send-keys                              \
+    "cd '$current_directory'                                              ; " \
+    "setterm -linewrap off                                                ; " \
+    "git-continuous-fetch-and-diff                                        ; " \
+    Enter
+
+  tmux select-pane -t$original_pane_id
 }
 
