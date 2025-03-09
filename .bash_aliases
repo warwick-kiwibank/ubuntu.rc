@@ -236,8 +236,8 @@ git-continuous-fetch-and-diff () {
 
 git-tmux-status-pane ()
 {
-  right_pane_width=72
-  lower_pane_height=48
+  right_pane_width=${1:-72} # Optional, defaults to 72
+  lower_pane_height=$2      # Optional, defaults to half of available height
 
   current_directory=$(pwd)
   TMUX_original_pane=$(tmux-pane-id)
@@ -255,11 +255,15 @@ git-tmux-status-pane ()
   tmux send-keys "cd '$current_directory'; "
   tmux send-keys "git-continuous-status; "
   tmux send-keys Enter
-  tmux split-pane -v \; resize-pane -y$lower_pane_height
+  tmux split-pane -v
+  pane_height=$(tmux display-message -p '#{pane_height}')
+  : ${lower_pane_height:=$pane_height}
+  tmux resize-pane -y$lower_pane_height
   tmux select-pane -T git_diff
   tmux send-keys "cd '$current_directory'; "
   tmux send-keys "setterm -linewrap off; "
-  tmux send-keys "git-continuous-fetch-and-diff $lower_pane_height; "
+  pane_height=$(tmux display-message -p '#{pane_height}')
+  tmux send-keys "git-continuous-fetch-and-diff $pane_height; "
   tmux send-keys Enter
   tmux select-pane -t$TMUX_original_pane
 }
