@@ -215,19 +215,22 @@ do
 done
 
 
-git-continuous-status () {
-  watch 3                                                         \
-    gbr-stack                     \;                              \
-    echo                          \;                              \
-    gss
+git-continuous-status-and-diff () {
+  watch 3                                                                     \
+    gbr-stack                                                              \; \
+    echo                                                                   \; \
+    gss                                                                    \; \
+    printf "'$CLR_Cyan%*s-$CLR_Normal\\n'" \$COLUMNS \| sed "'s/  / -/g'"  \; \
+    gdf --color                                                            \| \
+    grep -Ev '[+-]\{3\}\ [ab]\\/'
 }
 
 git-continuous-fetch-and-diff () {
   diff_range=${2:-origin/main..}
-  watch 9                                                         \
-    printf "'diff $CLR_BPurple%s$CLR_Normal\\n'" "'$diff_range'"\;\
-    git fetch \>/dev/null\;                                       \
-    gdf --color "'$diff_range'"   \|                              \
+  watch 9                                                                     \
+    printf "'diff $CLR_BPurple%s$CLR_Normal\\n'" "'$diff_range'"           \; \
+    git fetch \>/dev/null                                                  \; \
+    gdf --color "'$diff_range'"                                            \| \
     grep -Ev '[+-]\{3\}\ [ab]\\/'
 }
 
