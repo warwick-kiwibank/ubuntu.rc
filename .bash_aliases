@@ -215,7 +215,10 @@ done
 
 
 git-continuous-status () {
-  watch 3 gbr-stack\; echo\; gss
+  watch 3                                                         \
+    gbr-stack                     \;                              \
+    echo                          \;                              \
+    gss
 }
 
 git-continuous-fetch-and-diff () {
