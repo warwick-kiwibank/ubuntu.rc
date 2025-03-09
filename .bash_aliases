@@ -97,7 +97,8 @@ function watch () {
     clear_eol="$(tput el)" # clear cursor to end of line
     clear_eos="$(tput ed)" # clear cursor to end of screen
     while true; do
-      buf="$(eval "$@" 2>&1)"
+      n=$(get-term-height)
+      buf=$(eval "$@" 2>&1 | head -n$n)
       echo -n "$cursor_home${buf//$'\n'/$clear_eol$'\n'}$clear_eos"
       sleep "$sleep"
     done
@@ -222,14 +223,12 @@ git-continuous-status () {
 }
 
 git-continuous-fetch-and-diff () {
-  nlines=${1:--0}
   diff_range=${2:-origin/main..}
   watch 9                                                         \
     printf "'diff $CLR_BPurple%s$CLR_Normal\\n'" "'$diff_range'"\;\
     git fetch \>/dev/null\;                                       \
     gdf --color "'$diff_range'"   \|                              \
-    grep -Ev '[+-]\{3\}\ [ab]\\/' \|                              \
-    head -n$nlines
+    grep -Ev '[+-]\{3\}\ [ab]\\/'
 }
 
 # git-tmux
@@ -263,7 +262,7 @@ git-tmux-status-pane ()
   tmux send-keys "cd '$current_directory'; "
   tmux send-keys "setterm -linewrap off; "
   pane_height=$(tmux display-message -p '#{pane_height}')
-  tmux send-keys "git-continuous-fetch-and-diff $pane_height; "
+  tmux send-keys "git-continuous-fetch-and-diff; "
   tmux send-keys Enter
   tmux select-pane -t$TMUX_original_pane
 }
