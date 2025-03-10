@@ -179,8 +179,11 @@ gbr-push () {
 }
 
 gbr-create () {
-  git branch -c "$@" &&
-    gbr-push "${@: -1}"
+  git switch -C "$@" &&
+    {
+      gbr-push "${@: -1}" 2>&1 1>&3 3>&- |
+        grep -v '^Already on ';
+    } 3>&1 1>&2
 }
 
 alias gbra="git branch"                       ; alias gbr=gbra
