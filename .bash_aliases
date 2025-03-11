@@ -6,6 +6,30 @@ function get-term-height () {
 
 
 
+# Cursor Styles
+## https://superuser.com/a/1302503
+export VTE_CURSOR_STYLE_TERMINAL_DEFAULT=0
+export VTE_CURSOR_STYLE_BLINK_BLOCK=1
+export VTE_CURSOR_STYLE_STEADY_BLOCK=2
+export VTE_CURSOR_STYLE_BLINK_UNDERLINE=3
+export VTE_CURSOR_STYLE_STEADY_UNDERLINE=4
+### *_IBEAMarextermextensions
+export VTE_CURSOR_STYLE_BLINK_IBEAM=5
+export VTE_CURSOR_STYLE_STEADY_IBEAM=6
+function cursor-style () {
+  if [ $# -gt 0 ]
+  then
+    printf '\033[%d q' $1
+  else
+    echo Usage: 'cursor-style <style-number>' >&2
+    echo Style numbers: >&2
+    env | grep --color=never VTE_CURSOR_STYLE_ | sort >&2
+    return -1
+  fi
+}
+
+
+
 # Colours
 ## https://stackoverflow.com/a/28938235
 
