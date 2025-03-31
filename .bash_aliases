@@ -297,17 +297,17 @@ git-tmux-status-pane ()
 
   # Send commands to the panes
   tmux select-pane -t$clock_pane_id \; send-keys                              \
-    "clock $right_pane_width                                              ; " \
+    " clock $right_pane_width                                             ; " \
     Enter
   tmux select-pane -t$git_status_id \; send-keys                              \
-    "cd '$current_directory'                                              ; " \
-    "setterm -linewrap off                                                ; " \
-    "git-continuous-status-and-diff                                       ; " \
+    " cd '$current_directory'                                             ; " \
+    " setterm -linewrap off                                               ; " \
+    " git-continuous-status-and-diff                                      ; " \
     Enter
   tmux select-pane -t$git_ogdiff_id \; send-keys                              \
-    "cd '$current_directory'                                              ; " \
-    "setterm -linewrap off                                                ; " \
-    "git-continuous-fetch-and-diff                                        ; " \
+    " cd '$current_directory'                                             ; " \
+    " setterm -linewrap off                                               ; " \
+    " git-continuous-fetch-and-diff                                       ; " \
     Enter
 
   tmux select-pane -t$original_pane_id
