@@ -157,7 +157,7 @@ PERL_LOCAL_LIB_ROOT="/home/vagrant/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB
 PERL_MB_OPT="--install_base \"/home/vagrant/perl5\""; export PERL_MB_OPT;
 PERL_MM_OPT="INSTALL_BASE=/home/vagrant/perl5"; export PERL_MM_OPT;
 
-# repo symlinks
+# Kiwibank repo symlinks
 (
   for src in $(
       for x in tf aws azure
@@ -166,6 +166,8 @@ PERL_MM_OPT="INSTALL_BASE=/home/vagrant/perl5"; export PERL_MM_OPT;
       done
     )
   do
+    dst=$(cut -d- -f2- <<<$src)
+    [ -e $dst ] || ln -sv $src $dst
     dst=$(cut -d- -f3- <<<$src)
     [ -e $dst ] || ln -sv $src $dst
   done
