@@ -210,6 +210,12 @@ gbr-create () {
     } 3>&1 1>&2
 }
 
+gbr-create-with-reference-to-azure-devops-board-ticket () {
+  ado_num="AB#$(tmux display-message -p '#S' | sed 's/[^0-9]//g')"
+  dscrptn=$(tr ' ' - <<<"$@" | tr A-Z a-z)
+  gbr-create $ado_num/$dscrptn
+}
+
 alias gbra="git branch"                       ; alias gbr=gbra
 alias gcom="tffmt && git commit"              ; alias gcm=gcom
 alias gche="git checkout"                     ; alias gch=gche ; alias gco=gche
@@ -223,6 +229,7 @@ alias gres="git reset --hard HEAD"            ; alias grs=gres
 alias gsho="git show"                         ; alias gsh=gsho
 alias gsta="git status"                       ; alias gst=gsta ; alias gss=gsta
 alias gbr.c="gbr-create"
+alias gbr.c.ado="gbr-create-with-reference-to-azure-devops-board-ticket"
 alias gbr.l="gbr -l"
 alias gbr.po="gbr-pop"
 alias gbr.pu="gbr-push"
@@ -238,7 +245,7 @@ alias grb.o="gpl.m && grb"
 alias gsh.no="gsh --name-only"
 
 ## map x-y to x.y
-for a in $(alias -p | perl -nle '/^alias (g\w+\.\w+)=/ and print $1')
+for a in $(alias -p | perl -nle '/^alias (g\w+(?:\.\w+)+)=/ and print $1')
 do
   alias $(tr . - <<<$a)=$a
 done
