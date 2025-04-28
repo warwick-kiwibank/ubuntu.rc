@@ -210,6 +210,12 @@ gbr-create () {
     } 3>&1 1>&2
 }
 
+gbr-create-azure-board () {
+  ado_num="AB#$(tmux display-message -p '#S' | sed 's/[^0-9]//g')"
+  dscrptn=$(tr ' ' - <<<"$@" | tr A-Z a-z)
+  gbr-create $ado_num/$dscrptn
+}
+
 alias gbra="git branch"                       ; alias gbr=gbra
 alias gcom="tffmt && git commit"              ; alias gcm=gcom
 alias gche="git checkout"                     ; alias gch=gche ; alias gco=gche
@@ -223,6 +229,7 @@ alias gres="git reset --hard HEAD"            ; alias grs=gres
 alias gsho="git show"                         ; alias gsh=gsho
 alias gsta="git status"                       ; alias gst=gsta ; alias gss=gsta
 alias gbr.c="gbr-create"
+alias gbr.cab="gbr-create-azure-board"
 alias gbr.l="gbr -l"
 alias gbr.po="gbr-pop"
 alias gbr.pu="gbr-push"
