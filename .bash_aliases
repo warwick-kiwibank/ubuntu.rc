@@ -228,6 +228,7 @@ alias greb="git rebase -i --autosquash main"  ; alias grb=greb
 alias gres="git reset --hard HEAD"            ; alias grs=gres
 alias gsho="git show"                         ; alias gsh=gsho
 alias gsta="git status"                       ; alias gst=gsta ; alias gss=gsta
+alias gswi="git switch"                       ; alias gsw=gswi
 alias gbr.c="gbr-create"
 alias gbr.cab="gbr-create-azure-board"
 alias gbr.l="gbr -l"
