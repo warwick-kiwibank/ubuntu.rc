@@ -100,9 +100,10 @@ alias lt="ll -tr"
 
 # grep
 
-alias  grep="grep $autocolour"
 alias fgrep="fgrep$autocolour"
 alias egrep="egrep$autocolour"
+alias  grep=egrep
+alias cgrep="egrep --color=always"
 
 
 
