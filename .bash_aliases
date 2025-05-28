@@ -195,7 +195,7 @@ gbr-pop () {
 gbr-push () {
   stack=$(.gbr-stack-file)
   old_branch=$(gbr-current)
-  git checkout "$1"
+  git switch "$1"
   new_branch=$(gbr-current)
   if ( [ "$new_branch" != "$old_branch" ] )
   then
