@@ -267,11 +267,14 @@ git-continuous-status-and-diff () {
 }
 
 git-continuous-fetch-and-diff () {
-  diff_range=${2:-origin/main..}
-  watch 9                                                                     \
-    printf "'diff $CLR_BPurple%s$CLR_Normal\\n'" "'$diff_range'"           \; \
-    git fetch \>/dev/null                                                  \; \
-    gdf --color "'$diff_range'"                                            \| \
+  cached=""
+  if [ "$1" == "--cached" ]; then cached=" --cached"; shift; fi
+  diff_range="${1:-origin/main}"
+  watch 9                                                                         \
+    printf "'diff%s $CLR_BPurple%s$CLR_Normal\\n'" "'$cached'" "'$diff_range'" \; \
+    git fetch \>/dev/null                                                      \; \
+    gdf.no$cached  "'$diff_range'"                                             \; \
+    gdf$cached --color "'$diff_range'"                                         \| \
     grep -Ev '[+-]\{3\}\ [ab]\\/'
 }
 
