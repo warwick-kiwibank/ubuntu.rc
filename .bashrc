@@ -128,13 +128,23 @@ PS1='\u:\w \[\e[32m\]$(git_branch)\[\e[0m\]$(kube_ps1)$ '
 # Turn kube info off by default - turn it on by calling kubeon
 kubeoff
 
-PATH="$PATH:/home/vagrant/bin:/home/vagrant/bin/adr-tools:/home/vagrant/.tfenv/bin:/usr/local/go/bin:/home/vagrant/go/bin"
-
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 export PYENV_ROOT="/home/vagrant/.pyenv"
-export PATH="$PYENV_ROOT/bin:/home/vagrant/.local/bin:$PATH"
+
+export PATH=$(<<HERE tr \\n :
+/home/vagrant/ubuntu.rc/scripts
+$PYENV_ROOT/bin
+/home/vagrant/.local/bin
+/home/vagrant/bin
+/home/vagrant/bin/adr-tools
+/home/vagrant/.tfenv/bin
+/usr/local/go/bin
+/home/vagrant/go/bin
+HERE
+)$PATH
+
 eval "$(pyenv init --path)"
 export PIPX_DEFAULT_PYTHON="$(pyenv which python)"
 
@@ -156,6 +166,8 @@ PERL5LIB="/home/vagrant/perl5/lib/perl5${PERL5LIB:+:${PERL5LIB}}"; export PERL5L
 PERL_LOCAL_LIB_ROOT="/home/vagrant/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_ROOT}}"; export PERL_LOCAL_LIB_ROOT;
 PERL_MB_OPT="--install_base \"/home/vagrant/perl5\""; export PERL_MB_OPT;
 PERL_MM_OPT="INSTALL_BASE=/home/vagrant/perl5"; export PERL_MM_OPT;
+
+
 
 # Kiwibank repo symlinks
 (
