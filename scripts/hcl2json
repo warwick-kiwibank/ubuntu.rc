@@ -1,0 +1,114 @@
+#!/usr/bin/bash
+
+help=$(<<HELP cat
+hcl2json - convert HCL to JSON
+
+Usage:  hcl2json [options] file [file...]
+
+This is a wrapper around the Docker image of Thayne McCombs' hcl2json
+(https://github.com/tmccombs/hcl2json).
+
+This wrapper does not handle input from standard input; you need to supply it
+with at least one file name.  If there is only one file to convert, it will
+parse that directly, but if there are several, it will encapsulate the outputs
+in a map, using the file names as keys.
+
+Options:
+  -c --colour       Force colour output.
+  -h --help         Print this help and quit.
+  -R --no-recurse   Do not scan sub-directories for Terraform files.
+  -s --simplify     Simplify any expressions that don't use variables or unknown
+                    functions.
+
+HELP
+)
+
+which jq >/dev/null || {
+  echo Please install jq. >&2
+  exit 1
+}
+
+which docker >/dev/null || {
+  echo Please install docker. >&2
+  exit 1
+}
+
+# Extract switches
+opts=$(<<<$help perl -ne '
+  /^\s*-(\w+)\s+--([\w-]+)/ or next;
+  push @short, $1; push @long,$2;
+  END {print "-o", join("", @short), " --long ", join(",", @long)}'
+)
+eval set -- $(getopt $opts -- "$@")
+for opt
+do
+  case "$opt" in
+    -c|--colour)
+      jq_opts+=" -C"
+      shift 1
+      ;;
+    -h|--help)
+      <<<$help cat
+      exit 0
+      ;;
+    -s|--simplify)
+      hcl2json_opts+=" -simplify"
+      shift 1
+      ;;
+  esac
+done
+[ "$1" == "--" ] && shift
+
+docker_repo=tmccombs/hcl2json
+
+get_docker_image() {
+  docker image list --format json |
+    jq -rs '
+      map(select(.Repository == "'$docker_repo'")) |
+      sort_by(.CreatedAt)[-1].ID
+    '
+}
+
+docker_image=$(get_docker_image)
+if [ -z $docker_image ]
+then
+  echo "No '$docker_repo' Docker image found." >&2
+  docker pull $docker_repo:latest
+  docker_image=$(get_docker_image)
+  if [ -z $docker_image ]
+  then
+    echo "Could not retrieve '$docker_repo'." >&2
+    exit 1
+  fi
+fi
+
+hcl2json() {
+  if [ -f "$1" ]
+  then
+    docker run -v $PWD:/srv $docker_image $hcl2json_opts /srv/"$1"
+  else
+    echo "Failed to open '$1': no such file." >&2
+    exit 1
+  fi
+}
+
+get_json() {
+  if [ ${#files[@]} -eq 1 ]
+  then
+    hcl2json "$1"
+  else
+    start=true
+    echo '{'
+    for file in "$@"
+    do
+      $start || echo ,
+      start=false
+      echo "\"$file\":"
+      hcl2json "$file" || echo null
+    done
+    echo '}'
+  fi
+}
+json=$(get_json)
+<<<"$json" jq $jq_opts || exit $?
+[ ! -z "$json" ] # Return an error code if there is no output

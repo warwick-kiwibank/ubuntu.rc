@@ -328,4 +328,3 @@ git-tmux-status-pane ()
 
   tmux select-pane -t$original_pane_id
 }
-
