@@ -3,19 +3,22 @@
 help=$(<<HELP cat
 hcl2json - convert HCL to JSON
 
-Usage:  hcl2json [options] file [file...]
+Usage:  hcl2json [options] path [path...]
 
 This is a wrapper around the Docker image of Thayne McCombs' hcl2json
 (https://github.com/tmccombs/hcl2json).
 
 This wrapper does not handle input from standard input; you need to supply it
-with at least one file name.  If there is only one file to convert, it will
+with at least one path.  Each path can be either a file or a directory.  For
+directories, each Terraform file within that directory and (by default) its
+sub-directories is processed.  If there is only one file to convert, it will
 parse that directly, but if there are several, it will encapsulate the outputs
 in a map, using the file names as keys.
 
 Options:
   -c --colour       Force colour output
   -h --help         Print this help and quit
+  -R --no-recurse   Do not scan sub-directories for Terraform files.
   -s --simplify     Simplify any expressions that don't use variables or unknown
                     functions
 
@@ -50,6 +53,10 @@ do
       <<<$help cat
       exit 0
       ;;
+    -R|--no-recurse)
+      find_opts+=" -maxdepth 1"
+      shift 1
+      ;;
     -s|--simplify)
       hcl2json_opts+=" -simplify"
       shift 1
@@ -57,6 +64,22 @@ do
   esac
 done
 [ "$1" == "--" ] && shift
+
+# Expand directories
+files=()
+while [ $# -gt 0 ]
+do
+  if [ -d "$1" ]
+  then
+    for file in $(find "$1" $find_opts -type f -name '*.tf')
+    do
+      files+=("$file")
+    done
+  else
+    files+=("$1")
+  fi
+  shift
+done
 
 docker_repo=tmccombs/hcl2json
 
@@ -92,13 +115,13 @@ hcl2json() {
 }
 
 json=$(
-  if [ $# -eq 1 ]
+  if [ ${#files[@]} -eq 1 ]
   then
-    hcl2json "$1"
+    hcl2json "$files"
   else
     start=true
     echo '{'
-    for file in "$@"
+    for file in "${files[@]}"
     do
       $start || echo ,
       start=false
