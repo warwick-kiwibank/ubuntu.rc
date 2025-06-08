@@ -1,0 +1,8 @@
+#!/usr/bin/bash
+
+# repos [dir]
+#
+# Finds all the git repos in dir.  Uses the current directory if dir is not
+# supplied.
+
+find ${1:-*} -type d -name .git | sed s,/.git$,,
