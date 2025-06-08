@@ -18,6 +18,9 @@ in a map, using the file names as keys.
 Options:
   -c --colour       Force colour output.
   -h --help         Print this help and quit.
+  -m --force-multi  Act as though multiple input files were provided.  I.e.,
+                    always encapsulate the output in a map with the file name as
+                    the key, even if there is only one file to process.
   -R --no-recurse   Do not scan sub-directories for Terraform files.
   -s --simplify     Simplify any expressions that don't use variables or unknown
                     functions.
@@ -42,11 +45,16 @@ opts=$(<<<$help perl -ne '
   END {print "-o", join("", @short), " --long ", join(",", @long)}'
 )
 eval set -- $(getopt $opts -- "$@")
+force_multi=false
 for opt
 do
   case "$opt" in
     -c|--colour)
       jq_opts+=" -C"
+      shift 1
+      ;;
+    -m|--force-multi)
+      force_multi=true
       shift 1
       ;;
     -h|--help)
@@ -115,7 +123,7 @@ hcl2json() {
 }
 
 get_json() {
-  if [ ${#files[@]} -eq 1 ]
+  if ! $($force_multi) && [ ${#files[@]} -eq 1 ]
   then
     hcl2json "$files"
   else
