@@ -240,10 +240,12 @@ alias gcm.afu="gcm -a --fixup"
 alias gcm.fu="gcm --fixup"
 alias gdf.c="gdf --cached"
 alias gdf.no="gdf --name-only"
+alias gdf.no.c="gdf --name-only --cached"
 alias glg.1="glg --oneline"
 alias glg.no="glg --name-only"
 alias glg.me='glg --author="$(git config user.name)"' # "mine"
 alias gpl.m='( GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD); git checkout main && git pull; git checkout $GIT_BRANCH; )'
+alias gps.f="gps -f"
 alias grb.o="gpl.m && grb"
 alias gsh.no="gsh --name-only"
 
