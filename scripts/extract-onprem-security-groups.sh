@@ -2,7 +2,7 @@
 
 if [ ! -e kb-tf-repos.json ]
 then
-  repos | grep ^kb-tf- | xargs hcl2json >kb-tf-repos.json
+  repos-local | grep ^kb-tf- | xargs hcl2json >kb-tf-repos.json
 fi
 
 if [ ! -e aws-security-groups.json ]

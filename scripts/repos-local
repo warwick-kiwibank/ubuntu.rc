@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-# repos [dir]
+# repos-local [dir]
 #
 # Finds all the git repos in dir.  Uses the current directory if dir is not
 # supplied.
