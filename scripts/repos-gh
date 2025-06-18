@@ -1,0 +1,27 @@
+#!/usr/bin/bash
+
+# repos-gh [<fullName regex>]
+#
+# Lists non-archived Kiwibank GitHub repositories that have a full name that
+# matches the <fullName regex> regular expression.  If no regular expression is
+# provided, all the non-archived Kiwibank repos will be listed.
+
+regex=\"$(sed 's/"/\\"/g' <<<"${1:-.}")\"
+regex_flags=\"${2}\"
+gh search repos \
+  --owner=Kiwibank \
+  --archived=false \
+  --json=fullName \
+  --limit 1000 \
+  --jq="
+      map(
+        select(
+          (.fullName | test(\"$x\$\"; \"i\"))
+          and
+          (.fullName | test($regex; $regex_flags))
+        )
+        | .fullName
+      )
+      | sort
+      | .[]
+    "
