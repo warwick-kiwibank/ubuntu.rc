@@ -1,0 +1,68 @@
+#!/usr/bin/bash
+
+# pr-search <test> [<repo filter>]
+#
+# Searches the repositories returned by repos-gh for PRs that have titles
+# starting with "AB#" and match the JQ condition <test>.
+#
+# Example:
+# pr-search '.title | test("snowflake";"i")' platform | jq '
+#   sort_by(.number)
+#   | map(with_entries(select(
+#       [.key] | inside(["createdAt","number","repository","state","title"])
+#     )))
+# '
+
+repos=($(
+  repos-gh "$2"
+))
+fields=(
+  assignees
+  author
+  authorAssociation
+  body
+  closedAt
+  commentsCount
+  createdAt
+  id
+  isDraft
+  isLocked
+  isPullRequest
+  labels
+  number
+  repository
+  state
+  title
+  updatedAt
+  url
+)
+fields=$(sed 's/ /,/g' <<<${fields[@]})
+if [ "$1" == "-h" ] || [ "$1" == "--help" ]
+then
+  <$0 perl -ne'$a>1 && last; $a+=/^$/ or next; s/^#( |$)// && print'
+  echo -e "\nAvailable fields to test are:,$fields" | sed 's/,/\n ./g'
+  exit
+fi
+delay=.75
+(
+  for repo in ${repos[@]}
+  do
+    echo $repo >&2
+    for i in $(seq 0 9)
+    do
+      sleep $delay
+      printf '%6d%%\r' ${i}0 >&2
+      gh search prs "AB#$i" \
+        --repo "$repo" \
+        --json $fields \
+        --limit 1000 \
+        --jq ".[]
+            | .repository |= .name
+            | select(${1:-true})
+          "
+      delay=$(bc <<<"scale=16; 129/128*$delay")
+    done
+    printf '\033[2K' >&2 # Clear the line
+  done
+) |
+  jq -s 'unique'
