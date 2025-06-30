@@ -1,33 +1,32 @@
 #!/usr/bin/bash
 
-help=$(<<HELP cat
-hcl2json - convert HCL to JSON
-
-Usage:  hcl2json [options] path [path...]
-
-This is a wrapper around the Docker image of Thayne McCombs' hcl2json
-(https://github.com/tmccombs/hcl2json).
-
-This wrapper does not handle input from standard input; you need to supply it
-with at least one path.  Each path can be either a file or a directory.  For
-directories, each Terraform file within that directory and (by default) its
-sub-directories is processed.  If there is only one file to convert, it will
-parse that directly, but if there are several, it will encapsulate the outputs
-in a map, using the file names as keys.
-
-Options:
-  -c --colour       Force colour output.
-  -h --help         Print this help and quit.
-  -m --force-multi  Act as though multiple input files were provided.  I.e.,
-                    always encapsulate the output in a map with the file name as
-                    the key, even if there is only one file to process.
-  -R --no-recurse   Do not scan sub-directories for Terraform files.
-  -s --simplify     Simplify any expressions that don't use variables or unknown
-                    functions.
-  -x --exclude re   Exclude files matching the regular expression re.
-
-HELP
-)
+# hcl2json - convert HCL to JSON
+#
+# Usage:  hcl2json [options] path [path...]
+#
+# This is a wrapper around the Docker image of Thayne McCombs' hcl2json
+# (https://github.com/tmccombs/hcl2json).
+#
+# This wrapper does not handle input from standard input; you need to supply it
+# with at least one path.  Each path can be either a file or a directory.  For
+# directories, each Terraform file within that directory and (by default) its
+# sub-directories is processed.  If there is only one file to convert, it will
+# parse that directly, but if there are several, it will encapsulate the outputs
+# in a map, using the file names as keys.
+#
+# Options:
+#   -c --colour       Force colour output.
+#   -h --help         Print this help and quit.
+#   -m --force-multi  Act as though multiple input files were provided.  I.e.,
+#                     always encapsulate the output in a map with the file name
+#                     as the key, even if there is only one file to process.
+#   -R --no-recurse   Do not scan sub-directories for Terraform files.
+#   -s --simplify     Simplify any expressions that don't use variables or
+#                     unknown functions.
+#   -x --exclude re   Exclude files matching the regular expression re.  The
+#                     regex always tries to match the start and end of the
+#                     string (^ and $ are implied), so you will usually want to
+#                     include '.*' and either end of the regex.
 
 which jq >/dev/null || {
   echo Please install jq. >&2
@@ -40,49 +39,22 @@ which docker >/dev/null || {
 }
 
 # Extract switches
-opts=$(<<<$help perl -ne '
-  /^\s*-(\w+)\s+--([\w-]+)(\s+[a-z-]+)?/ or next;
-  push @sht, $1.($3 && ":");
-  push @lng, $2.($3 && ":");
-  END {print "-o", join("", @sht), " --long ", join(",", @lng)}'
-)
-eval set -- $(getopt $opts -- "$@")
-force_multi=false
-for opt
-do
-  case "$opt" in
-    -c|--colour)
-      jq_opts+=" -C"
-      ;;
-    -h|--help)
-      <<<$help cat
-      exit 0
-      ;;
-    -m|--force-multi)
-      force_multi=true
-      ;;
-    -R|--no-recurse)
-      find_opts+=" -maxdepth 1"
-      ;;
-    -s|--simplify)
-      hcl2json_opts+=" -simplify"
-      ;;
-    -x|--exclude)
-      find_opts+=" -regex $2"
-      shift 1
-      ;;
-  esac
-  shift 1
-done
-[ "$1" == "--" ] && shift
+. <(process-options $0)
 
 # Expand directories
 files=()
+maxdepth=
+$(option R) && maxdepth='-maxdepth 1'
+exclude=$(option x)
+[ -z "$exclude" ] || exclude="-regex $exclude"
+find-tf() {
+  find "$1" $maxdepth \! $exclude -type f -name '*.tf'
+}
 while [ $# -gt 0 ]
 do
   if [ -d "$1" ]
   then
-    for file in $(find "$1" $find_opts -type f -name '*.tf')
+    for file in $(find-tf "$1")
     do
       files+=("$file")
     done
@@ -118,7 +90,9 @@ fi
 hcl2json() {
   if [ -f "$1" ]
   then
-    docker run -v $PWD:/srv $docker_image $hcl2json_opts /srv/"$1"
+    simplify=
+    $(option s) && simplify=" -simplify"
+    docker run -v $PWD:/srv $docker_image $simplify /srv/"$1"
   else
     echo "Failed to open '$1': no such file." >&2
     exit 1
@@ -126,7 +100,7 @@ hcl2json() {
 }
 
 get_json() {
-  if ! $($force_multi) && [ ${#files[@]} -eq 1 ]
+  if ! $(option m) && [ ${#files[@]} -eq 1 ]
   then
     hcl2json "$files"
   else
@@ -143,5 +117,7 @@ get_json() {
   fi
 }
 json=$(get_json)
-<<<"$json" jq $jq_opts || exit $?
+colour=
+$(option c) && colour='-C'
+<<<"$json" jq $colour || exit $?
 [ ! -z "$json" ] # Return an error code if there is no output

@@ -1,0 +1,184 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title></title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPIS">SYNOPIS</a>
+    <ul>
+      <li>
+        <ul>
+          <li><a href="#Example-script---process-options-example.sh">Example script - process-options-example.sh</a></li>
+          <li><a href="#Output">Output</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#CAVEATS">CAVEATS</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#AUTHOR">AUTHOR</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p><code>process-options</code> - prints bash commands to handle option arguments</p>
+
+<h1 id="SYNOPIS">SYNOPIS</h1>
+
+<h3 id="Example-script---process-options-example.sh">Example script - <code>process-options-example.sh</code></h3>
+
+<pre><code>  #!/usr/bin/bash
+
+  # process-options-example.sh - shows how to use process-options
+  #
+  # Usage:  .  process-options-example.sh
+  #
+  # This is a bash script that examples the use of process-options.
+  #
+  # Options:
+  #   -a --Aa x    The -a (or --Aa) option takes a parameter &quot;x&quot;.
+  #                Default: Default value for a
+  #   -b --Bb      The -b/--Bb switch does not take any parameters.
+
+  . &lt;(process-options $0)
+
+  echo &quot;&#39;a&#39; is set to &#39;$(option a)&#39;&quot;
+  if $(option b)
+  then echo &quot;&#39;b&#39; is set&quot;
+  else echo &quot;&#39;b&#39; is not set&quot;
+  fi
+
+  option a value new value
+  echo &quot;&#39;a&#39; is now set to &#39;$(option a)&#39;&quot;
+  option
+  echo &quot;The positional arguments are: $@&quot;</code></pre>
+
+<h3 id="Output">Output</h3>
+
+<pre><code>  &gt; ./process-options-example.sh -a 1 one --Bb two
+  &#39;a&#39; is set to &#39;1&#39;
+  &#39;b&#39; is set
+  &#39;a&#39; is now set to &#39;new value&#39;
+  aargument adescription along ashort avalue bdescription blong bshort bvalue
+  The positional arguments are: one two
+
+  &gt; ./process-options-example.sh -- -b two
+  &#39;a&#39; is set to &#39;Default value for a&#39;
+  &#39;b&#39; is not set
+  &#39;a&#39; is now set to &#39;new value&#39;
+  aargument adescription along ashort avalue bdescription blong bshort
+  The positional arguments are: -b two</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>When <code>process-options</code> is sourced from a bash script, it:</p>
+
+<ol>
+
+<li><p>Extracts the comments from the source of the calling script, and stores that into a <code>$help</code> variable (which is accessable by the caller).</p>
+
+</li>
+<li><p>Uses the <i>Options</i> section of the help to comments to build an <code>options</code> associative array. The keys of this array are of the form of <i>&lt;short option character&gt;&lt;field name&gt;</i>, where <i>&lt;field name&gt;</i> is one of:</p>
+
+<dl>
+
+<dt id="short">- <code>short</code></dt>
+<dd>
+
+</dd>
+<dt id="long">- <code>long</code></dt>
+<dd>
+
+</dd>
+<dt id="argument">- <code>argument</code></dt>
+<dd>
+
+</dd>
+<dt id="description">- <code>description</code></dt>
+<dd>
+
+</dd>
+<dt id="value">- <code>value</code></dt>
+<dd>
+
+</dd>
+</dl>
+
+<p>E.g., <code>options[xvalue]</code> references the value for the option <code>x</code>.</p>
+
+</li>
+<li><p>Using <code>getopt</code>, strips the option arguments from <code>$@</code>, using them to populate the respective <code>?value</code> fields in the <code>options</code> associative array.</p>
+
+</li>
+<li><p>Provides an <code>option</code> function for convinient getting and setting of the <code>options</code> array. Its behaviour varies depending on the number of arguments it receives:</p>
+
+<dl>
+
+<dt id="option-with-no-arguments"><code>option</code> (with no arguments)</dt>
+<dd>
+
+<p>Displays the keys of <code>options</code>.</p>
+
+</dd>
+<dt id="option-opt-char-e.g.-option-x"><code>option &lt;opt-char&gt;</code> (e.g., <code>option x</code>)</dt>
+<dd>
+
+<p>Displays the current value of <code>options[&lt;opt-char&gt;value]</code>. If <code>options</code> does not contain the key <code>&lt;opt-char&gt;value</code>, &quot;false&quot; is displayed for switch options (i.e., those that don&#39;t take an argument) and nothing is displayed for options that do take an argument.</p>
+
+</dd>
+<dt id="option-opt-char-field-e.g.-option-x-description"><code>option &lt;opt-char&gt; &lt;field&gt;</code> (e.g., <code>option x description</code>)</dt>
+<dd>
+
+<p>Displays the current value of <code>options[&lt;opt-char&gt;&lt;field&gt;]</code>.</p>
+
+</dd>
+<dt id="option-opt-char-field-value"><code>option &lt;opt-char&gt; &lt;field&gt; &lt;value&gt;...</code></dt>
+<dd>
+
+<p>Sets <code>options[&lt;opt-char&gt;&lt;field&gt;]</code> to <code>&lt;value&gt;</code>. If there are more than three arguments, the final ones are concatenated into <code>&lt;value&gt;</code>.</p>
+
+</dd>
+</dl>
+
+</li>
+</ol>
+
+<h1 id="CAVEATS">CAVEATS</h1>
+
+<p>The calling script must be invoked as a bash executable, not called with the <code>source</code> command.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="https://man7.org/linux/man-pages/man1/getopt.1.html">getopt(1)</a></p>
+
+<h1 id="AUTHOR">AUTHOR</h1>
+
+<p>Warwick Allen</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright (c) 2025 Warwick Allen</p>
+
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &quot;Software&quot;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
+
+<p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
+
+<p>THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+
+
+</body>
+
+</html>
+
+

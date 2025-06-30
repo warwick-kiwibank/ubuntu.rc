@@ -1,48 +1,19 @@
 #!/usr/bin/bash
 
-declare -A o
-o=(
-  [f]="\n"
-)
-help=$(<<HELP cat
-repos-gh - list repos hosted in GitHub
+# repos-gh - list repos hosted in GitHub
+#
+# Usage:  repos-gh [options] [<fullName regex>]
+#
+# Lists non-archived Kiwibank GitHub repositories that have a full name that
+# matches the <fullName regex> regular expression.  If no regular expression is
+# provided, all the non-archived Kiwibank repos will be listed.
+#
+# Options:
+#   -f --OFS c        Use character c as the output field seperator.
+#                     Default: \n
+#   -h --help         Print this help and quit.
 
-Usage:  repos-gh [options] [<fullName regex>]
-
-Lists non-archived Kiwibank GitHub repositories that have a full name that
-matches the <fullName regex> regular expression.  If no regular expression is
-provided, all the non-archived Kiwibank repos will be listed.
-
-Options:
-  -f --OFS c        Use character c as the output field seperator.
-                    Default: ${o[f]}
-  -h --help         Print this help and quit.
-
-HELP
-)
-
-# Extract switches
-opts=$(<<<$help perl -ne '
-  /^\s*-(\w+)\s+--([\w-]+)(\s+[a-z-]+)?/ or next;
-  push @sht, $1.($3 && ":");
-  push @lng, $2.($3 && ":");
-  END {print "-o", join("", @sht), " --long ", join(",", @lng)}'
-)
-eval set -- $(getopt $opts -- "$@")
-for opt
-do
-  case "$opt" in
-    -f|--OFS)
-      o[f]=$2
-      ;;
-    -h|--help)
-      <<<$help cat
-      exit 0
-      ;;
-  esac
-  shift 1
-done
-[ "$1" == "--" ] && shift
+. <(process-options $0)
 
 regex=\"$(sed 's/"/\\"/g' <<<"${1:-.}")\"
 regex_flags=\"${2}\"
@@ -63,4 +34,5 @@ gh search repos \
       | sort
       | .[]
     " |
-  perl -e'$,="'${o[f]}'"; print map {chop; $_} <>';
+  perl -le'$,="'$(option f)'"; print map {chop; $_} <>';
+

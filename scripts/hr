@@ -1,50 +1,22 @@
 #!/usr/bin/bash
 
-declare -A o
-o=(
-  [c]='─'
-  [w]=$(coalesce $(tmux display -p "#{pane_width}") 80)
-)
-help=$(<<HELP cat
-hr - print a horizontal rule (line)
-
-Usage:  hr [options]
-
-Options:
-  -c --character c  Use character c to use to draw the rule.
-                    Default: ${o[c]}
-  -h --help         Print this help and quit.
-  -w --width n      Set the width of the rule to n characters.
-                    Default: ${o[w]}
-
-HELP
-)
+# hr - print a horizontal rule (line)
+#
+# Usage:  hr [options]
+#
+# Options:
+#   -c --character c  Use character c to use to draw the rule.
+#                     Default: ─
+#                              (line drawing caracter)
+#   -h --help         Print this help and quit.
+#   -w --width n      Set the width of the rule to n characters.
+#                     Defaults to the tmux pane width (or 80 characters, if not
+#                     in a tmux pane).
 
 # Extract switches
-opts=$(<<<$help perl -ne '
-  /^\s*-(\w+)\s+--([\w-]+)(\s+[a-z-]+)?/ or next;
-  push @sht, $1.($3 && ":");
-  push @lng, $2.($3 && ":");
-  END {print "-o", join("", @sht), " --long ", join(",", @lng)}'
-)
-eval set -- $(getopt $opts -- "$@")
-for opt
-do
-  case "$opt" in
-    -c|--character)
-      o[c]=$2
-      ;;
-    -h|--help)
-      <<<$help cat
-      exit 0
-      ;;
-    -w|--width)
-      o[w]=$2
-      ;;
-  esac
-  shift 1
-done
-[ "$1" == "--" ] && shift
+. <(process-options $0)
 
-printf -v spaces '%*s' ${o[w]}
-echo ${spaces// /${o[c]}}
+[ -z "$(option w)" ] &&
+  option w value $(coalesce $(tmux display -p "#{pane_width}") 80)
+printf -v spaces '%*s' $(option w)
+echo ${spaces// /$(option c)}
