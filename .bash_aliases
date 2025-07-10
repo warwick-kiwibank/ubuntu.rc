@@ -218,6 +218,37 @@ gbr-create-with-reference-to-azure-devops-board-ticket () {
   gbr-create $ado_num/$dscrptn
 }
 
+git-list-custom-aliases () {
+  local _git_aliases=(git)
+  while true
+  do
+    local _git_aliases_cnt=${#_git_aliases[*]}
+    local _git_alias
+    for _git_alias in ${_git_aliases[@]}
+    do
+      local _this_alias
+      for _this_alias in $(
+          alias -p |
+            grep -E "\<$_git_alias\>" |
+            cut -d= -f1 |
+            cut -d\  -f2
+        )
+      do
+        <<<"${_git_aliases[*]}" grep -qE "\<$_this_alias\>" ||
+          _git_aliases+=($_this_alias)
+      done
+    done
+    if [ $_git_aliases_cnt -eq ${#_git_aliases[*]} ]
+    then
+      break
+    fi
+  done
+  alias -p |
+    grep -E "($(<<<"${_git_aliases[*]}" tr \  \|))" |
+    grep -P '(?<=^alias )[^=]*' # This is just for colouring
+}
+
+alias g.ls.a="git-list-custom-aliases"        ; alias glsa=g.ls.a
 alias gbra="git branch"                       ; alias gbr=gbra
 alias gcom="tffmt && git commit"              ; alias gcm=gcom
 alias gche="git checkout"                     ; alias gch=gche ; alias gco=gche
