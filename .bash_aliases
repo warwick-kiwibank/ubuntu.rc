@@ -102,6 +102,7 @@ alias la="'ls'$autocolour -A"
 alias  l="'ls'$autocolour -CF"
 alias ld="ll -d"
 alias lt="ll -tr"
+alias ltree="tree -C | sed -e's/└/╰/'" # -e's/├──/╞╾─/'
 
 
 
