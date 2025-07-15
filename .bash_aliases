@@ -82,6 +82,13 @@ export CLR_IRed='\033[0;91m'         # Red
 
 
 
+# Unicode
+
+export vvert=‖
+export vvvert=⦀
+
+
+
 # ls
 
 ## enable colour support of ls and also add handy aliases
