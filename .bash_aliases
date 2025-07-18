@@ -169,61 +169,61 @@ alias tfdoc='find $(git rev-parse --show-toplevel) -type d -exec test -e {}/READ
 
 # git
 
-.gbr-stack-file () {
+.brh-stack-file () {
   stack=$(git rev-parse --show-toplevel)/.git/branch-stack
   touch -a $stack
   echo $stack
 }
 
-gbr-current () {
+brh-current () {
     git rev-parse --abbrev-ref HEAD
 }
 
-gbr-stack () {
-  stack=$(.gbr-stack-file)
+brh-stack () {
+  stack=$(.brh-stack-file)
   grep --color=always -n '^' $stack
-  printf '\033[0;32m->\033[0m'; gbr-current
+  printf '\033[0;32m->\033[0m'; brh-current
 }
 
-gbr-pop () {
-  stack=$(.gbr-stack-file)
-  old_branch=$(gbr-current)
+brh-pop () {
+  stack=$(.brh-stack-file)
+  old_branch=$(brh-current)
   if ( [ -s "$stack" ] )
   then
     git checkout "$(tail -1 "$stack")"
-    new_branch=$(gbr-current)
+    new_branch=$(brh-current)
     if ( [ "$new_branch" != "$old_branch" ] )
     then
       sed -i '$ d' "$stack"
     fi
   fi
-  gbr-stack
+  brh-stack
 }
 
-gbr-push () {
-  stack=$(.gbr-stack-file)
-  old_branch=$(gbr-current)
+brh-push () {
+  stack=$(.brh-stack-file)
+  old_branch=$(brh-current)
   git switch "$1"
-  new_branch=$(gbr-current)
+  new_branch=$(brh-current)
   if ( [ "$new_branch" != "$old_branch" ] )
   then
     printf '%s\n' "$old_branch" >>"$stack"
   fi
-  gbr-stack
+  brh-stack
 }
 
-gbr-create () {
+brh-create () {
   git switch -C "$@" &&
     {
-      gbr-push "${@: -1}" 2>&1 1>&3 3>&- |
+      brh-push "${@: -1}" 2>&1 1>&3 3>&- |
         grep -v '^Already on ';
     } 3>&1 1>&2
 }
 
-gbr-create-with-reference-to-azure-devops-board-ticket () {
+brh-create-with-reference-to-azure-devops-board-ticket () {
   ado_num="AB#$(tmux display-message -p '#S' | sed 's/[^0-9]//g')"
   dscrptn=$(tr ' ' - <<<"$@" | tr A-Z a-z)
-  gbr-create $ado_num/$dscrptn
+  brh-create $ado_num/$dscrptn
 }
 
 git-list-custom-aliases () {
@@ -256,37 +256,7 @@ git-list-custom-aliases () {
     grep -P '(?<=^alias )[^=]*' # This is just for colouring
 }
 
-alias g.ls.a="git-list-custom-aliases"        ; alias glsa=g.ls.a
-alias gbra="git branch"                       ; alias gbr=gbra
-alias gcom="tffmt && git commit"              ; alias gcm=gcom
-alias gche="git checkout"                     ; alias gch=gche ; alias gco=gche
-alias gdif="git diff"                         ; alias gdf=gdif
-alias glog="git log"                          ; alias glg=glog
-alias gmto="git mergetool"                    ; alias gmt=gmto
-alias gpul="git pull"                         ; alias gpl=gpul
-alias gpus="git push"                         ; alias gps=gpus
-alias greb="git rebase -i --autosquash main"  ; alias grb=greb
-alias gres="git reset --hard HEAD"            ; alias grs=gres
-alias gsho="git show"                         ; alias gsh=gsho
-alias gsta="git status"                       ; alias gst=gsta ; alias gss=gsta
-alias gswi="git switch"                       ; alias gsw=gswi
-alias gbr.c="gbr-create"
-alias gbr.c.ado="gbr-create-with-reference-to-azure-devops-board-ticket"
-alias gbr.l="gbr -l"
-alias gbr.po="gbr-pop"
-alias gbr.pu="gbr-push"
-alias gcm.afu="gcm -a --fixup"
-alias gcm.fu="gcm --fixup"
-alias gdf.c="gdf --cached"
-alias gdf.no="gdf --name-only"
-alias gdf.no.c="gdf --name-only --cached"
-alias glg.1="glg --oneline"
-alias glg.no="glg --name-only"
-alias glg.me='glg --author="$(git config user.name)"' # "mine"
-alias gpl.m='( GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD); git checkout main && git pull; git checkout $GIT_BRANCH; )'
-alias gps.f="gps -f"
-alias grb.o="gpl.m && grb"
-alias gsh.no="gsh --name-only"
+. <(git-alias-factory)
 
 ## map x-y to x.y
 for a in $(alias -p | perl -nle '/^alias (g\w+(?:\.\w+)+)=/ and print $1')
@@ -297,7 +267,7 @@ done
 
 git-continuous-status-and-diff () {
   watch 3                                                                     \
-    gbr-stack                                                              \; \
+    brh-stack                                                              \; \
     echo                                                                   \; \
     gss                                                                    \; \
     printf "'$CLR_Cyan%*s-$CLR_Normal\\n'" \$COLUMNS \| sed "'s/  / -/g'"  \; \

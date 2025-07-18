@@ -78,6 +78,11 @@ xterm*|rxvt*)
     ;;
 esac
 
+export PATH=$(<<HERE tr \\n :
+/home/vagrant/ubuntu.rc/scripts
+HERE
+)$PATH
+
 # colored GCC warnings and errors
 #export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
@@ -87,7 +92,7 @@ esac
 # See /usr/share/doc/bash-doc/examples in the bash-doc package.
 
 if [ -f ~/.bash_aliases ]; then
-    . ~/.bash_aliases
+  . ~/.bash_aliases
 fi
 
 # Cursor colour and style

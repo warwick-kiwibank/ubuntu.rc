@@ -1,0 +1,36 @@
+#!/usr/bin/perl -l
+
+$_ = q/
+  add
+  branch   \l: --list
+           \c:-create \c.ado:-create-with-reference-to-azure-devops-board-ticket
+           \po:-pop \.:-pop \pu:-push \,:-push
+  commit   \a: -a \afu: -a --fixup \fu: --fixup
+  checkOut
+  diff     \c: --cached \no: --name-only \no.c: --name-only --cached
+  log      \1: --oneline \no: --name-only \me: --author="$(git config user.name)"
+  mergeTool
+  pull     \m: ( GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD);
+                 git checkout main && git pull; git checkout $GIT_BRANCH; )
+  push     \f: --force
+  rebase -i --autosquash main
+  reset --hard HEAD
+  show     \no: --name-only
+  stack
+  status
+  switch
+/;
+s/\n {3,}/ /gs;
+$, = $\;
+print map "alias g$_", ".ls.a=git-list-custom-aliases", "a=g.ls.a", map {
+  /(\w)(?x: \w*?(?<b>[^aeiou])\w*?(?<c>[A-Z])
+          | \w*?(?<b>[^aeiou])\w*?(?<c>\w)[aeiou]*\b
+          | \w*?(?<b>\w      )\w*?(?<c>\w)[aeiou]*\b )/;
+  ($a, $b, $c) = ($1, $+{b}, $+{c});
+  $c =~ s/.*/\L$&/p;
+  @s = split(/\s*\\\s*/);
+  $t = shift @s;
+  $t =~ s/.*/\L$&/p;
+  $d = /^re/ ? $b : $c;
+  "$a$b$c='git $t'", "$a$d=g$a$b$c", map {/(\S*?)\s*:(.*)/; "$a$d.$1='g$a$d$2'"} @s
+} grep $_, split /\n\s*/;
