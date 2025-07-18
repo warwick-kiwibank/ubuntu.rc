@@ -162,7 +162,7 @@ tmux-pane-id () {
 
 # terraform
 
-alias tffmt='terraform fmt -recursive $(git rev-parse --show-toplevel)'
+alias tffmt='type terraform >/dev/null && terraform fmt -recursive $(git rev-parse --show-toplevel) || true'
 alias tfdoc='find $(git rev-parse --show-toplevel) -type d -exec test -e {}/README.md \; -exec terraform-docs {} \;' # Only update existing README files
 
 
